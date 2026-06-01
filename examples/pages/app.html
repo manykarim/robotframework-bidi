@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>BiDi Demo App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1 id="heading">BiDi Demo App</h1>
+
+  <form id="login">
+    <input id="username" name="username" type="text" placeholder="user">
+    <input id="password" name="password" type="password" placeholder="pass">
+    <input id="upload" type="file" style="position:absolute;left:-9999px">
+    <button id="submit" type="button">Sign in</button>
+    <button id="spa" type="button" onclick="history.pushState({}, '', '/route2')">SPA nav</button>
+  </form>
+
+  <ul id="todos">
+    <li class="todo">Write a BiDi test</li>
+    <li class="todo">Capture the network</li>
+    <li class="todo">Assert the result</li>
+  </ul>
+
+  <demo-card></demo-card>
+  <iframe id="frame" src="frame.html" title="demo frame"></iframe>
+
+  <script src="app.js"></script>
+  <script>
+    console.log('app page loaded');
+    console.warn('demo warning: using mock credentials');
+    customElements.define(
+      'demo-card',
+      class extends HTMLElement {
+        constructor() {
+          super();
+          const root = this.attachShadow({ mode: 'open' });
+          root.innerHTML =
+            '<button class="shadow-action">Shadow Action</button>' +
+            '<span class="shadow-label">In Shadow</span>';
+        }
+      },
+    );
+    document.getElementById('submit').addEventListener('click', () => {
+      fetch('api/data.json');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<!doctype html><html><head><title>Shadow Test</title></head><body>
+<h1>Main Title</h1>
+<my-card></my-card>
+<iframe srcdoc="<p class='in-frame'>frame content</p>"></iframe>
+<script>
+customElements.define('my-card', class extends HTMLElement{
+  constructor(){super();const r=this.attachShadow({mode:'open'});
+  r.innerHTML='<button class="shadow-btn">Shadow Button</button>';}
+});
+</script>
+</body></html>

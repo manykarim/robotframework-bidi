@@ -1,0 +1,75 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "robotframework-bidi"
+version = "0.2.0"
+description = "WebDriver BiDi engine for Robot Framework, with Browser and SeleniumLibrary adapters"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+authors = [{ name = "MarketSquare" }]
+keywords = ["robotframework", "webdriver", "bidi", "browser", "selenium", "playwright"]
+classifiers = [
+    "Framework :: Robot Framework",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+]
+# The framework-neutral core depends only on a WebSocket library. Host adapters
+# are optional extras so users install only what they need.
+dependencies = [
+    "websockets>=12.0",
+]
+
+[project.optional-dependencies]
+# Robot Framework Browser adapter (plugins=Browser_BiDi/BrowserBiDi.py).
+# robotframework-browser already pulls robotframework-assertion-engine.
+browser = [
+    "robotframework-browser>=19.12",
+]
+# SeleniumLibrary adapter (plugins=Selenium_BiDi/SeleniumBiDi.py).
+# The adapter uses assertionengine; SeleniumLibrary does not pin it, so declare it.
+selenium = [
+    "robotframework-seleniumlibrary>=6.6",
+    "selenium>=4.20",
+    "robotframework-assertion-engine>=4.0,<5",
+]
+test = ["pytest>=8", "pytest-asyncio>=0.23"]
+
+# Dev/example dependencies installed by default under `uv run` (see [tool.uv]),
+# so `uv run robot examples` has BOTH host adapters available. Not part of the
+# published package's runtime deps — those stay optional via the extras above.
+[dependency-groups]
+examples = [
+    "robotframework-browser>=19.12",
+    "robotframework-seleniumlibrary>=6.6",
+    "selenium>=4.20",
+    "robotframework-assertion-engine>=4.0,<5",
+]
+
+[tool.uv]
+default-groups = ["examples"]
+
+[project.scripts]
+# Custom installer: refresh/align the chromium-bidi mapper, optionally fetch drivers.
+bidi-init = "bidi_core.installer:main"
+
+[project.urls]
+Homepage = "https://github.com/MarketSquare/robotframework-browser-extensions"
+
+[tool.hatch.build.targets.wheel]
+# Core engine + both host adapters. Each adapter only works if its host library
+# is installed (via the matching extra).
+packages = ["bidi_core", "Browser_BiDi", "Selenium_BiDi"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"Browser_BiDi/helper.js" = "Browser_BiDi/helper.js"
+# Vendored chromium-bidi mapper bundle (Apache-2.0) for driverless Chrome BiDi.
+"bidi_core/mapper/mapperTab.js" = "bidi_core/mapper/mapperTab.js"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+# Integration suites require live browsers + drivers; run them explicitly.
+addopts = "--ignore=tests/integration"

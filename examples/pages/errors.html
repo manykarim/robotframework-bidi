@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Errors Demo</title></head>
+<body>
+  <h1>Errors Demo</h1>
+  <script>
+    console.log('errors page loaded');
+    setTimeout(function () { throw new Error('Intentional demo error'); }, 30);
+    notAFunction();  // uncaught ReferenceError
+  </script>
+</body></html>

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>BiDi Demo Home</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1 id="heading">BiDi Demo Home</h1>
+  <nav><a id="to-app" href="app.html">Open App</a></nav>
+  <img id="logo" src="pixel.png" alt="pixel">
+  <script src="app.js"></script>
+  <script>
+    console.log('home page loaded');
+    document.cookie = 'demo_session=abc123; path=/; SameSite=Lax';
+    fetch('api/data.json')
+      .then((r) => r.json())
+      .then((d) => console.info('fetched user', d.userId));
+  </script>
+</body>
+</html>

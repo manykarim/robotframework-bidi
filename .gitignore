@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Build / dist
+build/
+dist/
+
+# Test / tool caches & output
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+results/
+log.html
+report.html
+output.xml
+*.log
+playwright-log.txt
+
+# Local agent/editor tool dirs (not part of the project)
+.claude/
+.codex/
+.kilocode/
+.idea/
+.vscode/
+.DS_Store
