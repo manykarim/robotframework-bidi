@@ -276,6 +276,30 @@ class SeleniumBiDi(LibraryComponent):
         value = self._manager.get_response_body(request_id)
         return verify_assertion(value, assertion_operator, assertion_expected, "BiDi response body", message)
 
+    @keyword(name="Get BiDi Response Headers", tags=("BiDi", "Network", "Getter", "Assertion"))
+    def get_bidi_response_headers(self, url_glob: str, assertion_operator: Optional[AssertionOperator] = None,
+                                  assertion_expected: Any = None, message: Optional[str] = None) -> Dict[str, str]:
+        """Response headers (lower-cased keys) of the last response matching ``url_glob``."""
+        value = self._manager.get_response_headers(url_glob)
+        return verify_assertion(value, assertion_operator, assertion_expected, "BiDi response headers", message)
+
+    @keyword(name="Get BiDi Response Timing", tags=("BiDi", "Network", "Performance", "Getter", "Assertion"))
+    def get_bidi_response_timing(self, url_glob: str, phase: str = "ttfb",
+                                 assertion_operator: Optional[AssertionOperator] = None,
+                                 assertion_expected: Any = None, message: Optional[str] = None) -> Optional[float]:
+        """A single FetchTimingInfo phase in ms (dns/connect/tls/ttfb/download/total)."""
+        value = self._manager.get_response_timing(url_glob, phase)
+        return verify_assertion(value, assertion_operator, assertion_expected, f"BiDi {phase} timing", message)
+
+    @keyword(name="Get BiDi Cookies", tags=("BiDi", "Storage", "Getter", "Assertion"))
+    def get_bidi_cookies(self, assertion_operator: Optional[AssertionOperator] = None,
+                         assertion_expected: Any = None, message: Optional[str] = None,
+                         *, name: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Cookies via BiDi ``storage.getCookies`` (optionally filtered by name);
+        each exposes value/domain/path/secure/httpOnly/sameSite for assertions."""
+        value = self._manager.get_cookies(name=name)
+        return verify_assertion(value, assertion_operator, assertion_expected, "BiDi cookies", message)
+
     @keyword(name="BiDi Mock Response", tags=("BiDi", "Network", "Intercept"))
     def bidi_mock_response(self, url_glob: str, status: int = 200, body: Optional[str] = None,
                            headers: Optional[Dict[str, str]] = None) -> None:

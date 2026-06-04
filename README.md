@@ -18,6 +18,72 @@ contexts**, input/uploads, navigation/downloads, and realm-scoped evaluation —
 as Robot Framework keywords. Keyword names are kept parallel across the two
 adapters so suites stay portable.
 
+The point: it gives **SeleniumLibrary** and **Browser Library** suites abilities
+they didn't have — most dramatically for SeleniumLibrary.
+
+## What robotframework-bidi unlocks
+
+| Capability | SeleniumLibrary before | Browser Library before | With robotframework-bidi |
+|---|---|---|---|
+| **Network mocking / stubbing** | ❌ external proxy (BrowserMob/mitmproxy) | ✅ route mocking | `BiDi Mock Response` — native, cross-browser |
+| **Fault injection / forced failures** | ❌ | ⚠️ via routes | `BiDi Fail Request` |
+| **HTTP auth handling** | ⚠️ URL-embedded creds | ✅ context creds | `BiDi Provide Auth` (event-driven) |
+| **Response body / headers / status assertions** | ❌ proxy needed | ⚠️ per-call, wrapper-shaped | `Get BiDi Response Body / Headers / Status` |
+| **Real-time console + JS-error capture (stack traces)** | ⚠️ unreliable, Chrome-only, post-hoc | ⚠️ wrapper, lossy ordering | `Get BiDi Console Log` / `Get BiDi JS Errors` (streaming, cross-browser) |
+| **Console search (substring / regex)** | ❌ | ❌ | `Get BiDi Console Log    text=… / pattern=…` |
+| **Per-request timings (DNS/connect/TLS/TTFB)** | ❌ | ❌ (Performance API by hand) | `Get BiDi Response Timing`, `Get BiDi Resource Timings` |
+| **Top-N slowest / largest resources** | ❌ | ❌ | `Get BiDi Slowest / Largest Resources    top=10` |
+| **Fast hermetic isolation (user contexts)** | ❌ fresh driver/process | ✅ contexts | `New BiDi User Context` |
+| **Standardized emulation (geo/locale/timezone)** | ⚠️ CDP-only, Chromium-locked | ✅ context options | `BiDi Set Geolocation / Locale / Timezone` (W3C, cross-browser) |
+| **ARIA snapshot (a11y tree)** | ❌ | ✅ `Get Aria Snapshot` | `Get BiDi Aria Snapshot` (now in Selenium too) |
+| **Preload scripts (before page scripts)** | ❌ | ✅ init scripts | `BiDi Add Preload Script` |
+
+**Honest framing.** For **SeleniumLibrary** this is largely *net-new* capability —
+network mocking/fault injection, real-time cross-browser error capture, response
+inspection, performance analysis, hermetic isolation, and a11y snapshots — over a
+**W3C standard** instead of Chromium-locked CDP hacks or an external proxy. For
+**Browser Library**, Playwright already covers most interaction features, so the
+genuine additions are narrower: **request-level network timing + top-N analysis**,
+**raw `log.entryAdded` streams** (args/stack/realm), **realm-scoped evaluation**,
+and a **standards-based, Firefox-capable** observability side-channel.
+
+Every row maps to a runnable suite under [`examples/`](examples/) (e.g.
+`network_interception.robot`, `console_and_errors.robot`,
+`network_traffic.robot`, and `selenium/selenium_bidi_example.robot`).
+
+### Use case 1 — SeleniumLibrary gains network mocking + real-time error capture (no proxy)
+
+```robotframework
+*** Settings ***
+Library    SeleniumLibrary    plugins=${p}/Selenium_BiDi/SeleniumBiDi.py
+
+*** Test Cases ***
+Checkout Survives A Flaky Payment API
+    Open BiDi Browser     https://shop.example/checkout
+    BiDi Subscribe        log.entryAdded, network.responseCompleted
+    BiDi Mock Response    *://*/api/inventory    body={"inStock": true}
+    BiDi Fail Request     *://*/api/analytics              # fault injection, no proxy
+    Click Button          id:pay
+    Get BiDi JS Error Count    ==    ${0}                  # cross-browser, streaming
+    [Teardown]    Run Keywords    Disconnect BiDi    AND    Close All Browsers
+```
+
+### Use case 2 — Performance budgets as assertions (both libraries)
+
+```robotframework
+Get BiDi Response Timing      *://*/api/me    ttfb    <    ${500}    # milliseconds
+${slowest}=    Get BiDi Slowest Resources    top=5    url_glob=*/static/*
+${largest}=    Get BiDi Largest Resources    top=5
+```
+
+### Use case 3 — Security & accessibility inspection (net-new for SeleniumLibrary)
+
+```robotframework
+Get BiDi Response Headers     *://*/    contains    content-security-policy
+Get BiDi Aria Snapshot        contains    - button "Pay now"
+${session}=    Get BiDi Cookies    name=session    # assert Secure / HttpOnly / SameSite
+```
+
 ## Install
 
 ```bash
@@ -30,7 +96,8 @@ bidi-init                                    # check runtime (Chrome + bundled m
 The framework-neutral `bidi_core` depends only on `websockets`; host libraries
 are optional extras. Chrome is **driverless** via the vendored chromium-bidi
 mapper; Firefox is driverless via native BiDi — `bidi-init` reports status and
-can refresh the mapper or fetch drivers (all opt-in).
+can refresh the mapper or fetch drivers (all opt-in). For the **Browser** adapter,
+also run `rfbrowser init` once to set up the Browser library's Node/Playwright side.
 
 ## SeleniumLibrary quickstart
 
@@ -105,15 +172,6 @@ response bodies are Chromium-reliable.
 
 Chrome 147 + ChromeDriver 147 · Firefox 150 + geckodriver 0.36 ·
 robotframework-browser 19.12 · robotframework 7.4 · websockets 16 · Python 3.12.
-
-## Installation
-
-```bash
-pip install robotframework-browser-bidi
-# plus the host library, if not already installed:
-pip install robotframework-browser
-rfbrowser init
-```
 
 ## The launch contract (important)
 
